@@ -60,11 +60,9 @@ loop_
 _rlnScheduleStringVariableName #1 
 _rlnScheduleStringVariableValue #2 
 _rlnScheduleStringVariableResetValue #3 
-ctffindExhaustive         No         No 
-mocoUseRelion         No         No 
-  movieDir Micrographs/*.tif Micrographs/*.tif 
-movieGainFile Micrographs/SuperRef_BV1_00000.mrc Micrographs/SuperRef_BV1_00000.mrc 
-   mtfFile         ""         "" 
+movieDir Micrographs/*.tif Micrographs/*.tif 
+movieGainFile Micrographs/gainref.mrc Micrographs/gainref.mrc 
+mtfFile         ""         "" 
 ro_moviesStar Schedules/preprocess/GetMovies/movies.star Schedules/preprocess/GetMovies/movies.star 
 ro_str_movies     movies     movies 
  
