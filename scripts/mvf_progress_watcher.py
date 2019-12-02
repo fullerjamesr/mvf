@@ -71,7 +71,7 @@ with open('.mvf_progress_hint', 'w') as fh:
 
 ###
 # Write out a .star file that will make the micrographs.star output usable in the Relion GUI as input to future jobs
-with open(os.path.join(args.o, 'RELION_OUTPUT_NODES.star')) as fh:
+with open(os.path.join(args.o, 'RELION_OUTPUT_NODES.star'), 'w') as fh:
     contents = OrderedDict((('rlnPipeLineNodeName', [output_path]), ('rlnPipeLineNodeType', [1])))
     rsp.write_table(fh, contents, block_name='output_nodes')
 
