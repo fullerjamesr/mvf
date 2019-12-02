@@ -3,6 +3,7 @@
 import cryoemtools.relionstarparser as rsp
 import argparse
 import os.path
+from collections import OrderedDict
 
 
 # Why doesn't Python have a builtin to fully explode a path? Dumb.
@@ -32,10 +33,11 @@ args = parser.parse_args()
 ###
 # Important files:
 # * The latest CTFFind run provided as input (args.in_mics)
-ctf_star = rsp.read_starfile(args.in_mics, tablefmt=rsp.TABLES_AS_ROW_DICTS, convertnumeric=False)
+CTF_STAR = rsp.read_starfile(args.in_mics, tablefmt=rsp.TABLES_AS_ROW_DICTS, convertnumeric=False)
 # * The MotionCor job that we're feeding off of, which sadly must be deduced from the rlnMicrographName column
-moco_star_path = os.path.join(*splitall(ctf_star['micrographs'][0]['rlnMicrographName'])[:2], 'corrected_micrographs.star')
-moco_star = rsp.read_starfile(moco_star_path, parseonly=['micrographs'], flatten=True, tablefmt=rsp.TABLES_AS_ROW_DICTS,
+moco_star_path = os.path.join(*splitall(CTF_STAR['micrographs'][0]['rlnMicrographName'])[:2],
+                              'corrected_micrographs.star')
+MOCO_STAR = rsp.read_starfile(moco_star_path, parseonly=['micrographs'], flatten=True, tablefmt=rsp.TABLES_AS_ROW_DICTS,
                               convertnumeric=False)
 # * Pre-exiting results already in this job directory (args.o/micrographs.star)
 output_path = os.path.join(args.o, 'micrographs.star')
@@ -48,7 +50,7 @@ else:
 ###
 # Take advantage of the sorted nature of each star
 first_new_line = len(previous_output_star)
-for new_row, moco_row in zip(ctf_star['micrographs'][first_new_line:], moco_star[first_new_line:]):
+for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR[first_new_line:]):
     new_row.update(moco_row)
     previous_output_star.append(new_row)
 
@@ -56,7 +58,7 @@ for new_row, moco_row in zip(ctf_star['micrographs'][first_new_line:], moco_star
 ###
 # Write a new micrographs.star, preserving the data_optics table too
 with open(output_path, 'w') as fh:
-    rsp.write_table(fh, ctf_star['optics'], 'optics', inputfmt=rsp.TABLES_AS_ROW_DICTS)
+    rsp.write_table(fh, CTF_STAR['optics'], 'optics', inputfmt=rsp.TABLES_AS_ROW_DICTS)
     rsp.write_table(fh, previous_output_star, 'micrographs', inputfmt=rsp.TABLES_AS_ROW_DICTS)
 
 ###
@@ -66,6 +68,12 @@ with open('.mvf_progress_hint', 'w') as fh:
     fh.write(" ")
     fh.write(str(len(previous_output_star)))
     fh.write("\n")
+
+###
+# Write out a .star file that will make the micrographs.star output usable in the Relion GUI as input to future jobs
+with open(os.path.join(args.o, 'RELION_OUTPUT_NODES.star')) as fh:
+    contents = OrderedDict((('rlnPipeLineNodeName', [output_path]), ('rlnPipeLineNodeType', [1])))
+    rsp.write_table(fh, contents, block_name='output_nodes')
 
 ###
 # Relion knows a job is complete when the program touches a file names RELION_JOB_EXIT_SUCCESS in the job directory
