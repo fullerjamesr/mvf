@@ -4,7 +4,7 @@
 data_schedule_general
 
 _rlnScheduleName                       Schedules/preprocess/
-_rlnScheduleCurrentNodeName            GetMovies
+_rlnScheduleCurrentNodeName            mut_movieCountShadow=mut_movieCount_PLUS_movieCountDelta
  
 
 # version 30001
@@ -34,8 +34,8 @@ movieAngPix     0.530000     0.530000
 movieCheckDelay    20.000000    20.000000 
 movieCountDelta     5.000000     5.000000 
  movieDose     1.310000     1.310000 
-mut_movieCount    50.000000     0.000000 
-mut_movieCountShadow    55.000000     0.000000 
+mut_movieCount     0.000000     0.000000 
+mut_movieCountShadow     0.000000     0.000000 
    voltage   300.000000   300.000000 
  
 
@@ -60,9 +60,9 @@ loop_
 _rlnScheduleStringVariableName #1 
 _rlnScheduleStringVariableValue #2 
 _rlnScheduleStringVariableResetValue #3 
-movieDir Micrographs/*.tif Micrographs/*.tif 
+  movieDir Micrographs/*.tif Micrographs/*.tif 
 movieGainFile Micrographs/gainref.mrc Micrographs/gainref.mrc 
-mtfFile         ""         "" 
+   mtfFile         ""         "" 
 ro_moviesStar Schedules/preprocess/GetMovies/movies.star Schedules/preprocess/GetMovies/movies.star 
 ro_str_movies     movies     movies 
  
@@ -92,9 +92,9 @@ _rlnScheduleJobNameOriginal #1
 _rlnScheduleJobName #2 
 _rlnScheduleJobMode #3 
 _rlnScheduleJobHasStarted #4 
- GetMovies Import/job008/   continue            1 
- StreamCTF CtfFind/job010/   continue            1 
-StreamMotion MotionCorr/job009/   continue            1 
+ GetMovies  GetMovies   continue            0 
+ StreamCTF  StreamCTF   continue            0 
+StreamMotion StreamMotion   continue            0 
  
 
 # version 30001
