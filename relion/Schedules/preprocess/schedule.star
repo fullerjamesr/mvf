@@ -93,6 +93,7 @@ _rlnScheduleJobName #2
 _rlnScheduleJobMode #3 
 _rlnScheduleJobHasStarted #4 
  GetMovies  GetMovies   continue            0 
+OutputProgress OutputProgress   continue            0 
  StreamCTF  StreamCTF   continue            0 
 StreamMotion StreamMotion   continue            0 
  
@@ -113,5 +114,6 @@ WAIT_movieCheckDelay  GetMovies            0  undefined  undefined
 mut_movieCount=COUNT_IMGS_ro_moviesStar_ro_str_movies mut_movieCountProceed=mut_movieCount_GE_mut_movieCountShadow            0  undefined  undefined 
 mut_movieCountProceed=mut_movieCount_GE_mut_movieCountShadow WAIT_movieCheckDelay            1 StreamMotion mut_movieCountProceed 
 StreamMotion  StreamCTF            0  undefined  undefined 
- StreamCTF mut_movieCountShadow=mut_movieCount_PLUS_movieCountDelta            0  undefined  undefined 
+ StreamCTF OutputProgress            0  undefined  undefined 
+OutputProgress mut_movieCountShadow=mut_movieCount_PLUS_movieCountDelta            0  undefined  undefined 
  

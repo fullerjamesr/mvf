@@ -3,7 +3,7 @@
 
 data_pipeline_general
 
-_rlnPipeLineJobCounter                       8
+_rlnPipeLineJobCounter                       9
  
 
 # version 30001
@@ -18,6 +18,7 @@ _rlnPipeLineProcessStatus #4
 Schedules/preprocess/GetMovies/       None            0            1 
 Schedules/preprocess/StreamMotion/       None            1            1 
 Schedules/preprocess/StreamCTF/       None            2            1 
+Schedules/preprocess/OutputProgress/       None           99            1 
  
 
 # version 30001
@@ -44,6 +45,7 @@ _rlnPipeLineEdgeFromNode #1
 _rlnPipeLineEdgeProcess #2 
 Schedules/preprocess/GetMovies/movies.star Schedules/preprocess/StreamMotion/ 
 Schedules/preprocess/StreamMotion/corrected_micrographs.star Schedules/preprocess/StreamCTF/ 
+Schedules/preprocess/StreamCTF/micrographs_ctf.star Schedules/preprocess/OutputProgress/ 
  
 
 # version 30001
