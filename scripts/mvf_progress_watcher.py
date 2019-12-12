@@ -4,6 +4,7 @@ import cryoemtools.relionstarparser as rsp
 import argparse
 import os.path
 from collections import OrderedDict
+from subprocess import run as sysrun
 
 
 # Why doesn't Python have a builtin to fully explode a path? Dumb.
@@ -18,6 +19,28 @@ def splitall(path):
             path = parts[0]
             allparts.insert(0, parts[1])
     return allparts
+
+
+def mrc2png(input, output_dir=None, fix_scaling=False, resize=None):
+    if output_dir:
+        filename = os.path.split(input)[-1]
+        output = os.path.join(output_dir, filename) + ".png"
+    else:
+        output = input + ".png"
+    if fix_scaling:
+        sysrun(['alterheader', '-MinMaxMean', input])
+    sysrun(['mrc2tif', '-p', '-q', '9', input, output])
+    if resize:
+        sysrun(['convert', output, '-resize', str(resize), output])
+
+
+def ctf2png(input, output_dir=None):
+    if output_dir:
+        filename = os.path.split(input)[-1]
+        output = os.path.join(output_dir, filename) + ".png"
+    else:
+        output = input + ".png"
+    sysrun(['ctffind_plot_results_png.sh', input, output])
 
 
 ###
@@ -48,11 +71,24 @@ else:
     previous_output_star = []
 
 ###
-# Take advantage of the sorted nature of each star
+# Take advantage of the time-sorted nature of the entries to skip to the new ones
+#  * Add new rows to the previous output
+#  * Create .png previews in the Previews/ directory for the web server of:
+#   - The micrograph
+#   - The FFT/idealized CTF previous written by CTFFind
+#   - The gnuplot output from CTFFind
+if not os.path.isdir('Previews'):
+    os.mkdir('Previews')
 first_new_line = len(previous_output_star)
 for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR[first_new_line:]):
     new_row.update(moco_row)
     previous_output_star.append(new_row)
+    micrograph_path = new_row['rlnMicrographName']
+    mrc2png(micrograph_path, output_dir='Previews/', resize=1448)
+    ctf_image_path = new_row['rlnCtfImage'][:-4]
+    mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True)
+    ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
+    ctf2png(ctf_avrot_path, output_dir='Previews/')
 
 
 ###
@@ -62,18 +98,18 @@ with open(output_path, 'w') as fh:
     rsp.write_table(fh, previous_output_star, 'micrographs', inputfmt=rsp.TABLES_AS_ROW_DICTS)
 
 ###
+# Write out a .star file that will make the micrographs.star output usable in the Relion GUI as input to future jobs
+with open(os.path.join(args.o, 'RELION_OUTPUT_NODES.star'), 'w') as fh:
+    contents = OrderedDict((('rlnPipeLineNodeName', [output_path]), ('rlnPipeLineNodeType', [1])))
+    rsp.write_table(fh, contents, block_name='output_nodes')
+
+###
 # Write out hints to the frontend as a simple file listing the output dir and micrograph count
 with open('.mvf_progress_hint', 'w') as fh:
     fh.write(output_path)
     fh.write(" ")
     fh.write(str(len(previous_output_star)))
     fh.write("\n")
-
-###
-# Write out a .star file that will make the micrographs.star output usable in the Relion GUI as input to future jobs
-with open(os.path.join(args.o, 'RELION_OUTPUT_NODES.star'), 'w') as fh:
-    contents = OrderedDict((('rlnPipeLineNodeName', [output_path]), ('rlnPipeLineNodeType', [1])))
-    rsp.write_table(fh, contents, block_name='output_nodes')
 
 ###
 # Relion knows a job is complete when the program touches a file names RELION_JOB_EXIT_SUCCESS in the job directory
