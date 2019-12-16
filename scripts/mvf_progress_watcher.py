@@ -21,26 +21,31 @@ def splitall(path):
     return allparts
 
 
-def mrc2png(input, output_dir=None, fix_scaling=False, resize=None):
+def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, greyify=False):
     if output_dir:
-        filename = os.path.split(input)[-1]
+        filename = os.path.split(input_file)[-1]
         output = os.path.join(output_dir, filename) + ".png"
     else:
-        output = input + ".png"
+        output = input_file + ".png"
     if fix_scaling:
-        sysrun(['alterheader', '-MinMaxMean', input])
-    sysrun(['mrc2tif', '-p', '-q', '9', input, output])
+        sysrun(['alterheader', '-MinMaxMean', input_file])
+    sysrun(['mrc2tif', '-p', '-q', '9', input_file, output])
     if resize:
         sysrun(['convert', output, '-resize', str(resize), output])
+    elif greyify:
+        sysrun(['convert', output, '-colorspace', 'Gray', output])
 
 
-def ctf2png(input, output_dir=None):
+def ctf2png(input_file, output_dir=None, size=None):
     if output_dir:
-        filename = os.path.split(input)[-1]
+        filename = os.path.split(input_file)[-1]
         output = os.path.join(output_dir, filename) + ".png"
     else:
-        output = input + ".png"
-    sysrun(['ctffind_plot_results_png.sh', input, output])
+        output = input_file + ".png"
+    if size:
+        sysrun(['ctffind_plot_results_png.sh', input_file, output, str(size)])
+    else:
+        sysrun(['ctffind_plot_results_png.sh', input_file, output])
 
 
 ###
@@ -50,7 +55,10 @@ parser = argparse.ArgumentParser(description="Consolidate MotionCor and CTFFind 
                                  epilog="https://github.com/fullerjamesr/mvf")
 parser.add_argument("--o", required=True)
 parser.add_argument("--in_mics", required=True)
-parser.add_argument("--j")
+parser.add_argument("--j", type=int, default=1)
+parser.add_argument("--mic_png_size", type=int, default=1448)
+parser.add_argument("--fft_png_size", type=int, default=None)
+parser.add_argument("--ctf_png_size", type=int, default=None)
 args = parser.parse_args()
 
 ###
@@ -84,11 +92,11 @@ for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR
     new_row.update(moco_row)
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
-    mrc2png(micrograph_path, output_dir='Previews/', resize=1448)
+    mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
     ctf_image_path = new_row['rlnCtfImage'][:-4]
-    mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True)
+    mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
-    ctf2png(ctf_avrot_path, output_dir='Previews/')
+    ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
 
 
 ###

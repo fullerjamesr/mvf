@@ -16,9 +16,8 @@
 
 
 # Parse arguments
-if [ $# -ne 1 ]
-then
-	echo "Usage: $(basename "$0") /path/to/output_from_ctffind_avrot.txt [/path/to/output.png]"
+if [[ $# -lt 1 ]] || [[ $# -gt 3 ]]; then
+	echo "Usage: $(basename "$0") /path/to/output_from_ctffind_avrot.txt [/path/to/output.png] [width in pixels]"
 	exit 65
 fi
 
@@ -35,6 +34,12 @@ if [[ $# -lt 2 ]]; then
 else
   output_fn=$2
 fi
+# Plot dimensions
+plot_width=1448
+if [[ $# -eq 3 ]]; then
+  plot_width=$3
+fi
+(( plot_height=plot_width/6 ))
 
 
 # Check whether gnuplot is available
@@ -111,7 +116,7 @@ fi
 gnuplot > /dev/null 2>&1  <<EOF
 #cat <<EOF > temp.txt
 set border linewidth 1.5
-set terminal pngcairo nocrop size 1448,512 enhanced font 'Arial,14'
+set terminal pngcairo nocrop size $plot_width,$plot_height enhanced font 'Arial,14'
 set output '$output_fn'
 
 # color definitions
