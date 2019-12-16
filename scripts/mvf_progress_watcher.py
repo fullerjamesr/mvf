@@ -5,6 +5,9 @@ import argparse
 import os.path
 from collections import OrderedDict
 from subprocess import run as sysrun
+from subprocess import DEVNULL
+import queue
+import threading
 
 
 # Why doesn't Python have a builtin to fully explode a path? Dumb.
@@ -21,6 +24,16 @@ def splitall(path):
     return allparts
 
 
+def worker(q):
+    while True:
+        try:
+            func, fn, kwargs = q.get(block=False)
+            func(fn, **kwargs)
+            q.task_done()
+        except queue.Empty:
+            break
+
+
 def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, greyify=False):
     if output_dir:
         filename = os.path.split(input_file)[-1]
@@ -28,12 +41,12 @@ def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, greyify
     else:
         output = input_file + ".png"
     if fix_scaling:
-        sysrun(['alterheader', '-MinMaxMean', input_file])
-    sysrun(['mrc2tif', '-p', '-q', '9', input_file, output])
+        sysrun(['alterheader', '-MinMaxMean', input_file], stdout=DEVNULL)
+    sysrun(['mrc2tif', '-p', '-q', '9', input_file, output], stdout=DEVNULL)
     if resize:
-        sysrun(['convert', output, '-resize', str(resize), output])
+        sysrun(['convert', output, '-resize', str(resize), output], stdout=DEVNULL)
     elif greyify:
-        sysrun(['convert', output, '-colorspace', 'Gray', output])
+        sysrun(['convert', output, '-colorspace', 'Gray', output], stdout=DEVNULL)
 
 
 def ctf2png(input_file, output_dir=None, size=None):
@@ -43,9 +56,9 @@ def ctf2png(input_file, output_dir=None, size=None):
     else:
         output = input_file + ".png"
     if size:
-        sysrun(['ctffind_plot_results_png.sh', input_file, output, str(size)])
+        sysrun(['ctffind_plot_results_png.sh', input_file, output, str(size)], stdout=DEVNULL)
     else:
-        sysrun(['ctffind_plot_results_png.sh', input_file, output])
+        sysrun(['ctffind_plot_results_png.sh', input_file, output], stdout=DEVNULL)
 
 
 ###
@@ -88,15 +101,25 @@ else:
 if not os.path.isdir('Previews'):
     os.mkdir('Previews')
 first_new_line = len(previous_output_star)
+to_do = queue.Queue()
 for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR[first_new_line:]):
     new_row.update(moco_row)
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
-    mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
+    # mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
+    to_do.put((mrc2png, micrograph_path, {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'greyify': True}))
     ctf_image_path = new_row['rlnCtfImage'][:-4]
-    mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
+    # mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
+    to_do.put((mrc2png, ctf_image_path,
+               {'output_dir': 'Previews/', 'fix_scaling': True, 'resize': args.mic_png_size, 'greyify': True}))
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
-    ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
+    # ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
+    to_do.put((ctf2png, ctf_avrot_path, {'output_dir': 'Previews/', 'size': args.ctf_png_size}))
+
+for _ in range(args.j):
+    t = threading.Thread(target=worker, args=[to_do])
+    t.start()
+to_do.join()
 
 
 ###
