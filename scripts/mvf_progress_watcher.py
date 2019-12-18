@@ -34,7 +34,7 @@ def worker(q):
             break
 
 
-def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, greyify=False):
+def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, fix_contrast=False):
     if output_dir:
         filename = os.path.split(input_file)[-1]
         output = os.path.join(output_dir, filename) + ".png"
@@ -43,10 +43,13 @@ def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, greyify
     if fix_scaling:
         sysrun(['alterheader', '-MinMaxMean', input_file], stdout=DEVNULL)
     sysrun(['mrc2tif', '-p', '-q', '9', input_file, output], stdout=DEVNULL)
+    image_magick_opts = []
     if resize:
-        sysrun(['convert', output, '-resize', str(resize), output], stdout=DEVNULL)
-    elif greyify:
-        sysrun(['convert', output, '-colorspace', 'Gray', output], stdout=DEVNULL)
+        image_magick_opts.extend(['-resize', str(resize)])
+    elif fix_contrast:
+        image_magick_opts.extend(['-contrast-stretch', '0.1%x0.1%'])
+    if len(image_magick_opts) > 0:
+        sysrun(['convert', output] + image_magick_opts + [output])
 
 
 def ctf2png(input_file, output_dir=None, size=None):
@@ -107,11 +110,11 @@ for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
     # mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
-    to_do.put((mrc2png, micrograph_path, {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'greyify': True}))
+    to_do.put((mrc2png, micrograph_path, {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'fix_contrast': True}))
     ctf_image_path = new_row['rlnCtfImage'][:-4]
     # mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
     to_do.put((mrc2png, ctf_image_path,
-               {'output_dir': 'Previews/', 'fix_scaling': True, 'resize': args.mic_png_size, 'greyify': True}))
+               {'output_dir': 'Previews/', 'fix_scaling': True, 'resize': args.fft_png_size}))
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
     # ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
     to_do.put((ctf2png, ctf_avrot_path, {'output_dir': 'Previews/', 'size': args.ctf_png_size}))
