@@ -23,7 +23,7 @@ _rlnJobOptionValue #2
     in_mov         "" 
    in_part         "" 
 min_dedicated          1 
-nr_threads          1 
+nr_threads $$previewImageThreads 
 other_args         "" 
 param10_label         "" 
 param10_value         "" 
