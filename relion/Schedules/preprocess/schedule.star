@@ -4,7 +4,7 @@
 data_schedule_general
 
 _rlnScheduleName                       Schedules/preprocess/
-_rlnScheduleCurrentNodeName            GetMovies
+_rlnScheduleCurrentNodeName            mut_movieCountShadow=mut_movieCount_PLUS_movieCountDelta
  
 
 # version 30001
@@ -34,8 +34,8 @@ movieAngPix     0.530000     0.530000
 movieCheckDelay    10.000000    10.000000 
 movieCountDelta     4.000000     4.000000 
  movieDose     1.310000     1.310000 
-mut_movieCount    50.000000     0.000000 
-mut_movieCountShadow    54.000000     0.000000 
+mut_movieCount     0.000000     0.000000 
+mut_movieCountShadow     0.000000     0.000000 
 previewImageThreads    20.000000    20.000000 
    voltage   300.000000   300.000000 
  
@@ -93,10 +93,10 @@ _rlnScheduleJobNameOriginal #1
 _rlnScheduleJobName #2 
 _rlnScheduleJobMode #3 
 _rlnScheduleJobHasStarted #4 
- GetMovies Import/job001/   continue            1 
-OutputProgress External/job004/   continue            1 
- StreamCTF CtfFind/job003/   continue            1 
-StreamMotion MotionCorr/job002/   continue            1 
+ GetMovies  GetMovies   continue            0 
+OutputProgress OutputProgress   continue            0 
+ StreamCTF  StreamCTF   continue            0 
+StreamMotion StreamMotion   continue            0 
  
 
 # version 30001
