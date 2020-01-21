@@ -1,0 +1,15 @@
+
+ ++++ Executing new job on Tue Jan 21 16:08:38 2020
+ ++++ with the following command(s): 
+mvf_progress_watcher.py --o External/job004/ --in_mics CtfFind/job003/micrographs_ctf.star --mic_png_size 1024 --fft_png_size 512 --j 20 
+ ++++ 
+
+ ++++ Executing new job on Tue Jan 21 16:12:59 2020
+ ++++ with the following command(s): 
+mvf_progress_watcher.py --o External/job004/ --in_mics CtfFind/job003/micrographs_ctf.star --mic_png_size 1024 --fft_png_size 512 --j 20 
+ ++++ 
+
+ ++++ Executing new job on Tue Jan 21 16:17:09 2020
+ ++++ with the following command(s): 
+mvf_progress_watcher.py --o External/job004/ --in_mics CtfFind/job003/micrographs_ctf.star --mic_png_size 1024 --fft_png_size 512 --j 20 
+ ++++ 
