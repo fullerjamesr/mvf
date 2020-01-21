@@ -44,10 +44,10 @@ def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, fix_con
         sysrun(['alterheader', '-MinMaxMean', input_file], stdout=DEVNULL)
     sysrun(['mrc2tif', '-p', '-q', '9', input_file, output], stdout=DEVNULL)
     image_magick_opts = []
+    if fix_contrast:
+        image_magick_opts.extend(['-sigmoidal-contrast', '20'])
     if resize:
         image_magick_opts.extend(['-resize', str(resize)])
-    elif fix_contrast:
-        image_magick_opts.extend(['-contrast-stretch', '0.1%x0.1%'])
     if len(image_magick_opts) > 0:
         sysrun(['convert', output] + image_magick_opts + [output])
 
