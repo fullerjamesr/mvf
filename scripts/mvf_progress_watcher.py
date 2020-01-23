@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import cryoemtools.relionstarparser as rsp
+import cryoemtools.image as mrcimage
 import argparse
 import os.path
 from collections import OrderedDict
@@ -8,6 +9,8 @@ from subprocess import run as sysrun
 from subprocess import DEVNULL
 import queue
 import threading
+import mrcfile
+from PIL import Image
 
 
 # Why doesn't Python have a builtin to fully explode a path? Dumb.
@@ -34,22 +37,23 @@ def worker(q):
             break
 
 
-def mrc2png(input_file, output_dir=None, fix_scaling=False, resize=None, fix_contrast=False):
+def mrc2png(input_file, output_dir=None, resize=None, sigma_contrast=False):
     if output_dir:
         filename = os.path.split(input_file)[-1]
         output = os.path.join(output_dir, filename) + ".png"
     else:
         output = input_file + ".png"
-    if fix_scaling:
-        sysrun(['alterheader', '-MinMaxMean', input_file], stdout=DEVNULL)
-    sysrun(['mrc2tif', '-p', '-q', '9', input_file, output], stdout=DEVNULL)
-    image_magick_opts = []
-    if fix_contrast:
-        image_magick_opts.extend(['-sigmoidal-contrast', '20'])
+
+    with mrcfile.open(input_file) as mrc:
+        data = mrc.data
+    if sigma_contrast:
+        mrcimage.sigma_contrast(data, sigma=sigma_contrast, new_range=(0, 255), inplace=True)
+    img = mrcimage.arr_to_img(data, scale=(not sigma_contrast))
     if resize:
-        image_magick_opts.extend(['-resize', str(resize)])
-    if len(image_magick_opts) > 0:
-        sysrun(['convert', output] + image_magick_opts + [output])
+        # numpy data has shape (height, width). could also use img.size, which is (width, height)
+        new_height = data.shape[0] * resize / data.shape[1]
+        img = img.resize((resize, new_height), resample=Image.BICUBIC)
+    img.save(output, format='png', compress_level=9)
 
 
 def ctf2png(input_file, output_dir=None, size=None):
@@ -75,6 +79,7 @@ parser.add_argument("--j", type=int, default=1)
 parser.add_argument("--mic_png_size", type=int, default=1448)
 parser.add_argument("--fft_png_size", type=int, default=None)
 parser.add_argument("--ctf_png_size", type=int, default=None)
+parser.add_argument("--mic_sigma_contrast", type=float, default=2.0)
 args = parser.parse_args()
 
 ###
@@ -110,11 +115,12 @@ for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
     # mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
-    to_do.put((mrc2png, micrograph_path, {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'fix_contrast': True}))
+    to_do.put((mrc2png, micrograph_path,
+               {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'sigma_contrast': args.mic_sigma_contrast}))
     ctf_image_path = new_row['rlnCtfImage'][:-4]
     # mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
     to_do.put((mrc2png, ctf_image_path,
-               {'output_dir': 'Previews/', 'fix_scaling': True, 'resize': args.fft_png_size}))
+               {'output_dir': 'Previews/', 'resize': args.fft_png_size}))
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
     # ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
     to_do.put((ctf2png, ctf_avrot_path, {'output_dir': 'Previews/', 'size': args.ctf_png_size}))
