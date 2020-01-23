@@ -46,12 +46,17 @@ def mrc2png(input_file, output_dir=None, resize=None, sigma_contrast=False):
 
     with mrcfile.open(input_file) as mrc:
         data = mrc.data
+    # mrcfile sets the writeable flag to 0 on the underlying data array, but it seems to remain in memory OK?
+    data.setflags(write=1)
+    # CTFFind writes out .mrc files with an improperly-set header byte so an extra dimension gets added by mrcfile :-(
+    if len(data.shape) > 2:
+        data = data.squeeze()
     if sigma_contrast:
         mrcimage.sigma_contrast(data, sigma=sigma_contrast, new_range=(0, 255), inplace=True)
     img = mrcimage.arr_to_img(data, scale=(not sigma_contrast))
     if resize:
         # numpy data has shape (height, width). could also use img.size, which is (width, height)
-        new_height = data.shape[0] * resize / data.shape[1]
+        new_height = int(data.shape[0] * resize / data.shape[1])
         img = img.resize((resize, new_height), resample=Image.BICUBIC)
     img.save(output, format='png', compress_level=9)
 
