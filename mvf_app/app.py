@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import argparse
 import os
 
 import dash
@@ -9,19 +8,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-from data import MotionCtfData
-from components import overview_figure, motion_figure, ctf_figure, update_figures
+from .data import MotionCtfData
+from .components import overview_figure, motion_figure, ctf_figure, update_figures
 
-####
-#
-# Command line arguments
-#
-parser = argparse.ArgumentParser(description="Launch an instance of the MVF Dash Server",
-                                 epilog="https://github.com/fullerjamesr/mvf")
-parser.add_argument("--cfreq", default=10, type=int,
-                    help="Frequency in seconds to direct clients to poll server (default: 10")
-parser.add_argument("project_dir", nargs='?',
-                    help="The Relion/MVF project directory to be served", default=os.getcwd())
 
 ####
 #
@@ -70,23 +59,28 @@ def motion_ctf_progress_updater(n_intervals):
 
 ####
 #
-# Entry point for uwsgi (Dash's underlying Flask server)
-#
-server = app.server
-
-
-####
-#
 # Main
 #
-def main():
+def main(opts=os.environ):
     global app, data
-    args = parser.parse_args()
-    hint_file_path = os.path.join(os.path.abspath(args.project_dir), '.mvf_progress_hint')
+    project_dir = opts.get('MVF_PROJECT_DIR', os.getcwd())
+    cfreq = int(opts.get('MVF_CFREQ', 10))
+    hint_file_path = os.path.join(os.path.abspath(project_dir), '.mvf_progress_hint')
     data = MotionCtfData(hint_file_path)
-    app.layout.children[-1].interval = 1000 * int(args.cfreq)
-    app.run_server(debug=True)
+    app.layout.children[-1].interval = 1000 * cfreq
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description="Launch an instance of the MVF Dash Server",
+                                     epilog="https://github.com/fullerjamesr/mvf")
+    parser.add_argument("--cfreq", default=10, type=int,
+                        help="Frequency in seconds to direct clients to poll server (default: 10")
+    parser.add_argument("project_dir", nargs='?',
+                        help="The Relion/MVF project directory to be served", default=os.getcwd())
+    args = parser.parse_args()
+    cli_opts = {'MVF_PROJECT_DIR': args.project_dir, 'MVF_CFREQ': args.cfreq}
+    main(cli_opts)
+    app.run_server(debug=True)
+else:
     main()
