@@ -20,7 +20,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 tab_style_fix = {'padding': '6px'}
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = html.Div([
-                html.H3(children='MVF'),
+                html.H3(children='MVF: Live Relion Preprocessing'),
                 dcc.Tabs([
                     dcc.Tab(label='Overview', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         html.Div([
@@ -47,9 +47,8 @@ data = None
               [Input('interval-component', 'n_intervals')])
 def motion_ctf_progress_updater(n_intervals):
     # Update either because the data changed or this is the first interval fired after load/refresh
-    if data and (data.update() or n_intervals == 0):
+    if data and (data.update() or n_intervals == 0) and data.data:
         new_count = len(data.data[next(iter(data.data))])
-        print("new_count = ", new_count)
         new_count_str = "Total processed micrographs: {}".format(new_count)
         update_figures(data.data)
         return new_count_str, overview_figure, motion_figure, ctf_figure
