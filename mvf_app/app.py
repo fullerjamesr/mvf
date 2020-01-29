@@ -61,6 +61,10 @@ def motion_ctf_progress_updater(n_intervals):
 #
 # Main
 #
+
+# ! WSGI entry point !
+server = app.server
+
 def main(opts=os.environ):
     global app, data
     project_dir = opts.get('MVF_PROJECT_DIR', os.getcwd())
