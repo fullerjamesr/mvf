@@ -70,6 +70,13 @@ def motion_ctf_progress_updater(n_intervals):
 
 ####
 #
+# Entry point for uwsgi (Dash's underlying Flask server)
+#
+server = app.server
+
+
+####
+#
 # Main
 #
 def main():
