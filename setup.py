@@ -12,5 +12,5 @@ setup(
     author='James',
     author_email='fullerjamesr@gmail.com',
     description='A Relion ver3.1 preprocessing loop and web server display',
-    install_requires=['dash', 'plotly', 'cryoemtools', 'pillow', 'mrcfile']
+    install_requires=['dash', 'plotly', 'cryoemtools', 'pillow', 'mrcfile', 'flask']
 )

@@ -2,6 +2,7 @@
 
 import os
 
+import flask
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -10,6 +11,17 @@ from dash.exceptions import PreventUpdate
 
 from .data import MotionCtfData
 from .components import overview_figure, motion_figure, ctf_figure, update_figures
+
+
+####
+#
+# Globals
+#
+
+# The object holding and monitoring the Relion job output
+data = None
+# The ratio of [fft, ctf plot] image heights to the height of the micrograph preview images
+previews_height_ratio = [None, None]
 
 
 ####
@@ -25,15 +37,19 @@ app.layout = html.Div([
                     dcc.Tab(label='Overview', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         html.Div([
                             dcc.Graph(id='overview_figure', figure=overview_figure, style={'height': '100vh'}),
-                            html.H6(id='mic_counter', children='Total processed micrographs: 0')])]),
+                            html.H6(id='mic_counter', children='Total processed micrographs: 0')]),
+                        html.Div(style={'border-top': '2px solid #1975FA', 'margin-top': '5vh'}, children=[
+                            html.H6('Most recent processed image:')]),
+                        html.Div(style={'display': 'flex'}, children=[
+                            html.Img(id='overview_real',
+                                     style={'margin': '5px', 'object-fit': 'contain', 'flex-basis': '60vw'}),
+                            html.Img(id='overview_fft',
+                                     style={'margin': '5px', 'object-fit': 'contain', 'flex-basis': '40vw'})])]),
                     dcc.Tab(label='Motion', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         dcc.Graph(id='motion_figure', figure=motion_figure, style={'height': '100vh'})]),
                     dcc.Tab(label='CTF', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         dcc.Graph(id='ctf_figure', figure=ctf_figure, style={'height': '120vh'})])]),
                 dcc.Interval(id='interval-component', interval=25 * 1000, n_intervals=0)])
-
-
-data = None
 
 
 ####
@@ -56,6 +72,31 @@ def motion_ctf_progress_updater(n_intervals):
         raise PreventUpdate
 
 
+@app.callback([Output('overview_real', 'src'),
+               Output('overview_fft', 'src')],
+              [Input('interval-component', 'n_intervals')])
+def most_recent_images_updater(n_intervals):
+    # Update either because the data changed or this is the first interval fired after load/refresh
+    if data and (data.update() or n_intervals == 0) and data.data:
+        route_path = 'previews/{}.png'
+        overview_real = route_path.format(os.path.split(data.data['rlnMicrographName'][-1])[-1])
+        overview_fft = route_path.format(os.path.split(data.data['rlnCtfImage'][-1][:-4])[-1])
+        # overview_ctfplot = route_path.format(os.path.split(data.data['rlnCtfImage'][-1][:-8] + '_avrot.txt')[-1])
+        return overview_real, overview_fft
+    else:
+        raise PreventUpdate
+
+
+@app.server.route('/previews/<image_path>.png')
+def serve_image(image_path):
+    if data and data.data:
+        image_filename = '{}.png'.format(image_path)
+        project_img_path = os.path.join(os.path.dirname(data.path), 'Previews')
+        return flask.send_from_directory(project_img_path, image_filename)
+    else:
+        flask.abort(404)
+
+
 ####
 #
 # Main
@@ -63,6 +104,7 @@ def motion_ctf_progress_updater(n_intervals):
 
 # ! WSGI entry point !
 server = app.server
+
 
 def main(opts=os.environ):
     global app, data
