@@ -20,8 +20,6 @@ from .components import overview_figure, motion_figure, ctf_figure, update_figur
 
 # The object holding and monitoring the Relion job output
 data = None
-# The ratio of [fft, ctf plot] image heights to the height of the micrograph preview images
-previews_height_ratio = [None, None]
 
 
 ####
@@ -32,7 +30,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 tab_style_fix = {'padding': '6px'}
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.layout = html.Div([
-                html.H3(children='MVF: Live Relion Preprocessing'),
+                html.H3(children='mvf: Live Relion Preprocessing'),
                 dcc.Tabs([
                     dcc.Tab(label='Overview', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         html.Div([

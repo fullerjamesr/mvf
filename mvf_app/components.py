@@ -72,17 +72,18 @@ for i, motion_col in enumerate(motion_columns):
     motion_figure.update_xaxes(title_text=columns_text_map[motion_col], row=2, col=i+1)
 
 
-ctf_figure = make_subplots(rows=6, cols=3, horizontal_spacing=0.04, vertical_spacing=0.06,
-                           specs=[[{'colspan': 3}, None, None],
-                                  [{'colspan': 3}, None, None],
-                                  [{'colspan': 3}, None, None],
-                                  [{'colspan': 3}, None, None],
-                                  [{}, {}, {}],
-                                  [{}, None, None]])
+len_ctf_columns = len(ctf_columns)
+ctf_plot_row_count = len_ctf_columns + (len_ctf_columns // 3) * 2 + (len_ctf_columns % 3 > 0) * 2
+ctf_figure = make_subplots(rows=ctf_plot_row_count, cols=3, horizontal_spacing=0.04, vertical_spacing=0.06,
+                           specs=[[{'colspan': 3}, None, None]] * len_ctf_columns +
+                                 [[{'rowspan': 2}, {'rowspan': 2}, {'rowspan': 2}], [None, None, None]] *
+                                    (len_ctf_columns//3) +
+                                 [[{'rowspan': 2}] * (len_ctf_columns%3) + [None] * (3-(len_ctf_columns%3))] +
+                                 [[None, None, None]])
 ctf_figure.update_layout(template=my_plotly_template, legend_orientation="h",
                          legend=dict(x=0.0, y=1.0, xanchor='left', yanchor='bottom'))
-ctf_figure.update_yaxes(title_text="Counts", row=5, col=1)
-ctf_figure.update_yaxes(title_text="Counts", row=6, col=1)
+for i in range(len_ctf_columns, ctf_plot_row_count, 2):
+    ctf_figure.update_yaxes(title_text="Counts", row=i+1, col=1)
 for i, ctf_col in enumerate(ctf_columns):
     ctf_figure.update_xaxes(title_text="Exposure number", row=i+1)
     ctf_figure.add_trace(go.Scatter(y=[], name=columns_text_map[ctf_col],
@@ -91,12 +92,14 @@ for i, ctf_col in enumerate(ctf_columns):
                                     line_color=column_colormap[ctf_col],
                                     meta={'y': ctf_col}),
                          row=i+1, col=1)
+    hist_row = len_ctf_columns + (i // 3) * 2
+    hist_col = i % 3
     ctf_figure.add_trace(go.Histogram(x=[], name=columns_text_map[ctf_col],
                                       legendgroup=columns_text_map[ctf_col], showlegend=False,
                                       marker_color=column_colormap[ctf_col],
                                       meta={'x': ctf_col}),
-                         row=5+i//3, col=1+i%3)
-    ctf_figure.update_xaxes(title_text=columns_text_map[ctf_col], row=5+i//3, col=1+i%3)
+                         row=hist_row+1, col=hist_col+1)
+    ctf_figure.update_xaxes(title_text=columns_text_map[ctf_col], row=hist_row+1, col=hist_col+1)
 
 
 def update_figures(new_data):
