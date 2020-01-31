@@ -49,7 +49,7 @@ app.layout = html.Div([
                             html.H6(id='mic_counter', children='Total processed micrographs: 0')]),
                         html.Div(style={'border-top': '2px solid #1975FA', 'margin-top': '5vh'}, children=[
                             html.H6('Most recent processed image:')]),
-                        html.Div(style={'display': 'flex'}, children=[
+                        html.Div(style={'display': 'flex', 'align-items': 'flex-start'}, children=[
                             html.Img(id='overview_real',
                                      style={'margin': '5px', 'object-fit': 'contain', 'width': '60vw'}),
                             html.Img(id='overview_fft',
@@ -62,7 +62,8 @@ app.layout = html.Div([
                         html.Div([details_table]),
                         html.Div([
                             html.H6(children='Selected exposure:'),
-                            html.Div(style={'display': 'flex', 'margin': '20px'}, children=[
+                            html.Div(style={'display': 'flex', 'align-items': 'flex-start', 'margin': '20px'},
+                                     children=[
                                 html.Img(id='details_real',
                                          style={'margin': '5px', 'object-fit': 'contain', 'width': '30vw'}),
                                 html.Img(id='details_fft',
