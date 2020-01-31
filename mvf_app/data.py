@@ -25,3 +25,9 @@ class MotionCtfData:
             return True
         else:
             return False
+
+    def to_datatable_format(self, columns):
+        if self.data:
+            return [{col: self.data[col][i] for col in columns} for i in range(len(self.data[columns[0]]))]
+        else:
+            return []
