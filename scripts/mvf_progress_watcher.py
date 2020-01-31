@@ -109,7 +109,7 @@ else:
 #  * Add new rows to the previous output
 #  * Create .png previews in the Previews/ directory for the web server of:
 #   - The micrograph
-#   - The FFT/idealized CTF previous written by CTFFind
+#   - The FFT/idealized CTF previews written by CTFFind
 #   - The gnuplot output from CTFFind
 if not os.path.isdir('Previews'):
     os.mkdir('Previews')
@@ -119,13 +119,13 @@ for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR
     new_row.update(moco_row)
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
-    # mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, greyify=True)
-    to_do.put((mrc2png, micrograph_path,
-               {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'sigma_contrast': args.mic_sigma_contrast}))
+    mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, sigma_contrast=args.mic_sigma_contrast)
+    # to_do.put((mrc2png, micrograph_path,
+    #           {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'sigma_contrast': args.mic_sigma_contrast}))
     ctf_image_path = new_row['rlnCtfImage'][:-4]
-    # mrc2png(ctf_image_path, output_dir='Previews/', fix_scaling=True, resize=args.fft_png_size, greyify=True)
-    to_do.put((mrc2png, ctf_image_path,
-               {'output_dir': 'Previews/', 'resize': args.fft_png_size}))
+    mrc2png(ctf_image_path, output_dir='Previews/', resize=args.fft_png_size)
+    # to_do.put((mrc2png, ctf_image_path,
+    #           {'output_dir': 'Previews/', 'resize': args.fft_png_size}))
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
     # ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
     to_do.put((ctf2png, ctf_avrot_path, {'output_dir': 'Previews/', 'size': args.ctf_png_size}))
