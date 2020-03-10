@@ -1,0 +1,31 @@
+/* reactive horizonal row of images*/
+div.imagerow-container {
+    display: flex;
+    align-items: flex-start;
+}
+img.imagerow-member {
+    margin: 5px;
+    object-fit: contain
+}
+
+
+/* Modal divs cover everything and shade the normal window content */
+div.modal-container {
+    position: fixed;
+    overflow: auto;
+    z-index: 1002; /* Some plotly graph elements have z = 1001, make sure to be on top of even those */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+/* Modal content is centered in the modal-container  */
+.modal-content {
+    display: block;
+    max-width: 95vw;
+    max-height: 95vh;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2.5vh
+}
