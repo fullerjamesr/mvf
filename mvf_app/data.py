@@ -17,8 +17,7 @@ class MotionCtfData:
             data_file = os.path.join(os.path.dirname(self.path), data_file)
             data_count = int(data_count)
         if data_count != self.data_count or data_file != self.data_file:
-            with open(data_file, 'r') as data_handle:
-                data = rsp.read(data_handle, parseonly=['micrographs'], flatten=True)
+            data = rsp.read_star(data_file, block_list=['micrographs'], flatten=True)
             self.data_file = data_file
             self.data_count = data_count
             self.data = data
