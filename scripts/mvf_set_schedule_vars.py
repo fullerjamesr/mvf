@@ -81,7 +81,7 @@ if 'schedule_strings' in schedule:
                 new_value = input("string {:s} (currently: {:s}): ".format(var_name, var_value)).strip()
                 if len(new_value) == 0:
                     break
-                elif not any(c.isspace() for c in new_value):
+                elif (not any(c.isspace() for c in new_value)) or (new_value[0] == new_value[-1] == '"'):
                     row['rlnScheduleStringVariableResetValue'] = new_value
                     break
 
