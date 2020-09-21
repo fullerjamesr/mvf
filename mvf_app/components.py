@@ -113,7 +113,7 @@ if __name__ == '__main__':
     For testing purposes, this file can be run directly with hard-coded testing data .star file
     '''
     with open('/Users/James/PycharmProjects/mvf/testing/External/job004/micrographs.star', 'r') as fh:
-        data = rsp.read(fh, parseonly=['micrographs'], flatten=True)
+        data = rsp.read_star(fh, block_list=['micrographs'], flatten=True)
     update_figures(data)
     overview_figure.show()
     motion_figure.show()
