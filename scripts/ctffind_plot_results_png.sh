@@ -81,7 +81,9 @@ END {
 }
 
 # CTFFind outputs data in lines, but gnuplot wants things in columns
-transpose_ignore_comments "$input_fn" > /tmp/tmp.txt
+tmpfile==$(mktemp -t mvf_ctffind_plot.XXXXXXXXXX)
+trap "rm -f $tmpfile;" EXIT
+transpose_ignore_comments "$input_fn" > $tmpfile
 
 # Let's grab useful values
 pixel_size=$(gawk 'match($0,/Pixel size: ([0-9.]*)/,a) {print a[1]}' $input_fn)
@@ -148,7 +150,7 @@ do for [current_micrograph=1:$number_of_micrographs] {
 	score=sprintf('%.3f',word(score_values,current_micrograph)+0)
 	maxres=sprintf('%.2f Å',word(maxres_values,current_micrograph)+0)
 	set title '$mic_name'."\nDefocus 1: ".def_1.' | Defocus 2: '.def_2.' | Azimuth: '.angast.' | Phase shift: '.pshift.' | Score: '.score.' | MaxRes: '.maxres
-	plot '/tmp/tmp.txt' using (\$1):(column(4+(current_micrograph-1)*$lines_per_micrograph)) w lines ls 3 title 'CTF fit', \
+	plot '$tmpfile' using (\$1):(column(4+(current_micrograph-1)*$lines_per_micrograph)) w lines ls 3 title 'CTF fit', \
 		 ''             using (\$1):(column(5+(current_micrograph-1)*$lines_per_micrograph)) w lines ls 1 title 'Quality of fit', \
 	 	 ''             using (\$1):(column(3+(current_micrograph-1)*$lines_per_micrograph))  w lines ls 5 title 'Amplitude spectrum'
 }
