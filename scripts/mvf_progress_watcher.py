@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import cryoemtools.relionstarparser as rsp
 import cryoemtools.image as mrcimage
 import argparse
@@ -13,14 +14,31 @@ import mrcfile
 from PIL import Image
 
 
-# Why doesn't Python have a builtin to fully explode a path? Dumb.
-def splitall(path):
+def explode_path(path):
+    """
+    Explode a path into a list of its parts by repeated calls to `os.path.split`
+
+    Has same corner cases as the underlying `os.path.split`. Corner cases of note:
+    * `explode_path('/path/to/file') # Leading slashes included` => `['/', 'path', 'to', 'file']`
+    * `explode_path('/path/to/folder/') # Trailing slashes yield an empty item` => `['/', 'path', 'to', 'folder', '']`
+    Treating these cases this way ensures that `path` could be reassembled by call(s) to `os.path.join`
+
+    Parameters
+    ----------
+    path : str
+
+    Returns
+    -------
+    list of str
+    """
     allparts = []
-    while 1:
+    while True:
         parts = os.path.split(path)
         if parts[1] == path:
             allparts.insert(0, parts[1])
             break
+        elif set(parts[0]) == {'/'}:
+            allparts = parts + allparts
         else:
             path = parts[0]
             allparts.insert(0, parts[1])
@@ -47,8 +65,9 @@ def mrc2png(input_file, output_dir=None, resize=None, sigma_contrast=False):
     with mrcfile.open(input_file) as mrc:
         data = mrc.data
     # mrcfile sets the writeable flag to 0 on the underlying data array, but it seems to remain in memory OK?
+    # it seems good to avoid making a copy
     data.setflags(write=1)
-    # CTFFind writes out .mrc files with an improperly-set header byte so an extra dimension gets added by mrcfile :-(
+    # CTFFind writes out .mrc files with an improperly-set header byte so an extra dimension gets added by mrcfile
     if len(data.shape) > 2:
         data = data.squeeze()
     if sigma_contrast:
@@ -57,7 +76,7 @@ def mrc2png(input_file, output_dir=None, resize=None, sigma_contrast=False):
     if resize:
         # numpy data has shape (height, width). could also use img.size, which is (width, height)
         new_height = int(data.shape[0] * resize / data.shape[1])
-        img = img.resize((resize, new_height), resample=Image.BICUBIC)
+        img = img.resize((resize, new_height), resample=Image.LANCZOS)
     img.save(output, format='png', compress_level=9)
 
 
@@ -87,20 +106,35 @@ parser.add_argument("--ctf_png_size", type=int, default=None)
 parser.add_argument("--mic_sigma_contrast", type=float, default=2.0)
 args = parser.parse_args()
 
-###
-# Important files:
-# * The latest CTFFind run provided as input (args.in_mics)
-CTF_STAR = rsp.read_starfile(args.in_mics, tablefmt=rsp.TABLES_AS_ROW_DICTS, convertnumeric=False)
-# * The MotionCor job that we're feeding off of, which sadly must be deduced from the rlnMicrographName column
-moco_star_path = os.path.join(*splitall(CTF_STAR['micrographs'][0]['rlnMicrographName'])[:2],
+# Before doing any work:
+# (1) Remove any previous signal files (RELION_JOB_EXIT_*)
+# (2) Set up sys.excepthook to touch a RELION_JOB_EXIT_FAILURE file if an uncaught exception kills this script
+RELION_JOB_EXIT_SUCCESS = os.path.join(args.o, 'RELION_JOB_EXIT_SUCCESS')
+RELION_JOB_EXIT_FAILURE = os.path.join(args.o, 'RELION_JOB_EXIT_FAILURE')
+try:
+    os.remove(RELION_JOB_EXIT_SUCCESS)
+    os.remove(RELION_JOB_EXIT_FAILURE)
+except FileNotFoundError:
+    pass
+default_sys_excepthook = sys.excepthook
+def signal_failure(*args):
+    with open(RELION_JOB_EXIT_FAILURE, 'w') as fh:
+        pass
+    default_sys_excepthook(*args)
+sys.excepthook = signal_failure
+
+CTF_STAR = rsp.read_star(args.in_mics, tablefmt=rsp.TableFormat.LIST_OF_ROW_DICTS, convert_numeric=False)
+# Infer the relevant MotionCor job by using the first two parts of the micrograph path from the first entry in CTF_STAR
+# TODO This will fail if multiple MotionCor jobs are being joined. This is unlikely to occur with on-th-fly processing.
+moco_star_path = os.path.join(*explode_path(CTF_STAR['micrographs'][0]['rlnMicrographName'])[:2],
                               'corrected_micrographs.star')
-MOCO_STAR = rsp.read_starfile(moco_star_path, parseonly=['micrographs'], flatten=True, tablefmt=rsp.TABLES_AS_ROW_DICTS,
-                              convertnumeric=False)
+MOCO_STAR = rsp.read_star(moco_star_path, block_list=['micrographs'], flatten=True, convert_numeric=False,
+                          tablefmt=rsp.TableFormat.LIST_OF_ROW_DICTS)
 # * Pre-exiting results already in this job directory (args.o/micrographs.star)
 output_path = os.path.join(args.o, 'micrographs.star')
 if os.path.isfile(output_path):
-    previous_output_star = rsp.read_starfile(output_path, parseonly=['micrographs'], flatten=True,
-                                             tablefmt=rsp.TABLES_AS_ROW_DICTS, convertnumeric=False)
+    previous_output_star = rsp.read_star(output_path, block_list=['micrographs'], flatten=True, convert_numeric=False,
+                                         tablefmt=rsp.TableFormat.LIST_OF_ROW_DICTS)
 else:
     previous_output_star = []
 
@@ -119,15 +153,15 @@ for new_row, moco_row in zip(CTF_STAR['micrographs'][first_new_line:], MOCO_STAR
     new_row.update(moco_row)
     previous_output_star.append(new_row)
     micrograph_path = new_row['rlnMicrographName']
-    mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, sigma_contrast=args.mic_sigma_contrast)
-    # to_do.put((mrc2png, micrograph_path,
-    #           {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'sigma_contrast': args.mic_sigma_contrast}))
+    #mrc2png(micrograph_path, output_dir='Previews/', resize=args.mic_png_size, sigma_contrast=args.mic_sigma_contrast)
+    to_do.put((mrc2png, micrograph_path,
+               {'output_dir': 'Previews/', 'resize': args.mic_png_size, 'sigma_contrast': args.mic_sigma_contrast}))
     ctf_image_path = new_row['rlnCtfImage'][:-4]
-    mrc2png(ctf_image_path, output_dir='Previews/', resize=args.fft_png_size)
-    # to_do.put((mrc2png, ctf_image_path,
-    #           {'output_dir': 'Previews/', 'resize': args.fft_png_size}))
+    #mrc2png(ctf_image_path, output_dir='Previews/', resize=args.fft_png_size)
+    to_do.put((mrc2png, ctf_image_path,
+               {'output_dir': 'Previews/', 'resize': args.fft_png_size}))
     ctf_avrot_path = ctf_image_path[:-4] + '_avrot.txt'
-    # ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
+    #ctf2png(ctf_avrot_path, output_dir='Previews/', size=args.ctf_png_size)
     to_do.put((ctf2png, ctf_avrot_path, {'output_dir': 'Previews/', 'size': args.ctf_png_size}))
 
 for _ in range(args.j):
@@ -139,8 +173,8 @@ to_do.join()
 ###
 # Write a new micrographs.star, preserving the data_optics table too
 with open(output_path, 'w') as fh:
-    rsp.write_table(fh, CTF_STAR['optics'], 'optics', inputfmt=rsp.TABLES_AS_ROW_DICTS)
-    rsp.write_table(fh, previous_output_star, 'micrographs', inputfmt=rsp.TABLES_AS_ROW_DICTS)
+    rsp.write_table(fh, CTF_STAR['optics'], 'optics', inputfmt=rsp.TableFormat.LIST_OF_ROW_DICTS)
+    rsp.write_table(fh, previous_output_star, 'micrographs', inputfmt=rsp.TableFormat.LIST_OF_ROW_DICTS)
 
 ###
 # Write out a .star file that will make the micrographs.star output usable in the Relion GUI as input to future jobs
@@ -158,6 +192,6 @@ with open('.mvf_progress_hint', 'w') as fh:
 
 ###
 # Relion knows a job is complete when the program touches a file names RELION_JOB_EXIT_SUCCESS in the job directory
-# TODO: implement RELION_JOB_EXIT_FAILURE in some way nicer than wrapping this whole thing in a giant try/except block
-with open(os.path.join(args.o, 'RELION_JOB_EXIT_SUCCESS'), 'w') as fh:
+# Uncaught exceptions that terminate this script early are dealt with by the sys.excepthook stuff above
+with open(RELION_JOB_EXIT_SUCCESS, 'w') as fh:
     pass
