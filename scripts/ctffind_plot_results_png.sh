@@ -81,7 +81,7 @@ END {
 }
 
 # CTFFind outputs data in lines, but gnuplot wants things in columns
-tmpfile==$(mktemp -t mvf_ctffind_plot.XXXXXXXXXX)
+tmpfile=$(mktemp -t mvf_ctffind_plot.XXXXXXXXXX)
 trap "rm -f $tmpfile;" EXIT
 transpose_ignore_comments "$input_fn" > $tmpfile
 
