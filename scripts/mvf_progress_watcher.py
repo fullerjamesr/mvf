@@ -209,11 +209,11 @@ def clear_prior_exits(job_dir):
     -------
     None
     """
-    try:
-        os.remove(os.path.join(job_dir, 'RELION_JOB_EXIT_SUCCESS'))
-        os.remove(os.path.join(job_dir, 'RELION_JOB_EXIT_FAILURE'))
-    except FileNotFoundError:
-        pass
+    for f in ('RELION_JOB_EXIT_SUCCESS', 'RELION_JOB_EXIT_FAILURE'):
+        try:
+            os.remove(os.path.join(job_dir, f))
+        except FileNotFoundError:
+            pass
 
 
 def main():
