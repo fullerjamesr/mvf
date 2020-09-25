@@ -157,6 +157,10 @@ def progress_updater(n_intervals):
                Output('details_avrot', 'src')],
               [Input('details_table', 'selected_rows')])
 def row_selected_updater(selected_rows):
+    # Guard against callback sequence not having updated data yet
+    global data
+    if data is None or data.data is None:
+        raise PreventUpdate
     # Note that, unlike plotly, Dash indices do start with 0
     new_selector = [{'if': {'row_index': i}, 'background_color': '#D2F3FF'} for i in selected_rows]
     details_real_src = generate_mic_image_src(selected_rows[0])
