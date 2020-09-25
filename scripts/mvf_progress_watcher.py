@@ -241,7 +241,7 @@ def main():
 
     ctf_star = rsp.read_star(args.in_mics, tablefmt=rsp.TableFormat.LIST_OF_ROW_DICTS, convert_numeric=False)
     # no point in running if there's nothing to process
-    if 'micrographs' not in ctf_star or len(ctf_star['micrographs'] == 0):
+    if 'micrographs' not in ctf_star or len(ctf_star['micrographs']) == 0:
         return
 
     # TODO: Huge assumption past this point: that any input to this job is a superset of the rows already processed,
