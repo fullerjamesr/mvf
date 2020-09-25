@@ -19,11 +19,11 @@ _rlnJobOptionValue #2
   in_3dref         "" 
  in_coords         "" 
    in_mask         "" 
-    in_mic Schedules/preprocess/StreamCTF/micrographs_ctf.star 
+    in_mic Schedules/mvf_basic/StreamCTF/micrographs_ctf.star 
     in_mov         "" 
    in_part         "" 
 min_dedicated          1 
-nr_threads $$previewImageThreads 
+nr_threads         40 
 other_args         "" 
 param10_label         "" 
 param10_value         "" 
@@ -46,6 +46,6 @@ param8_value         ""
 param9_label         "" 
 param9_value         "" 
       qsub       qsub 
-qsubscript /public/EM/RELION/relion/bin/relion_qsub.csh 
+qsubscript /programs/i386-mac/relion/3.1-beta/bin/qsub.csh 
  queuename    openmpi 
  

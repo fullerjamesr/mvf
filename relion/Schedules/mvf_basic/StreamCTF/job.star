@@ -16,9 +16,9 @@ _rlnJobOptionVariable #1
 _rlnJobOptionValue #2 
        box       1024 
    ctf_win         -1 
-      dast $$ctffindAstig 
-     dfmax $$ctffindMaxDefocus 
-     dfmin $$ctffindMinDefocus 
+      dast        500 
+     dfmax      50000 
+     dfmin       2000 
     dfstep        100 
     do_EPA         No 
 do_ignore_ctffind_params        Yes 
@@ -27,22 +27,22 @@ do_phaseshift         No
 fn_ctffind_exe    ctffind 
 fn_gctf_exe /public/EM/Gctf/bin/Gctf 
    gpu_ids         "" 
-input_star_mics Schedules/preprocess/StreamMotion/corrected_micrographs.star 
+input_star_mics Schedules/mvf_basic/StreamMotion/corrected_micrographs.star 
 min_dedicated          1 
-    nr_mpi $$ctffindMPIs 
+    nr_mpi         40 
 other_args         "" 
 other_gctf_args         "" 
  phase_max        180 
  phase_min          0 
 phase_step         10 
       qsub       qsub 
-qsubscript /public/EM/RELION/relion/bin/relion_qsub.csh 
+qsubscript /programs/i386-mac/relion/3.1-beta/bin/qsub.csh 
  queuename    openmpi 
-    resmax $$ctffindMaxRes 
-    resmin $$ctffindMinRes 
-slow_search $$ctffindExhaustive 
+    resmax          5 
+    resmin         30 
+slow_search         No 
 use_ctffind4        Yes 
   use_gctf         No 
-use_given_ps         No 
-  use_noDW        Yes 
+use_given_ps        Yes 
+  use_noDW         No 
  
