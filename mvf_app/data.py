@@ -3,11 +3,13 @@ import cryoemtools.relionstarparser as rsp
 
 
 class MotionCtfData:
-    def __init__(self, path):
+    def __init__(self, path, init=True):
         self.path = path
         self.data_file = None
         self.data_count = 0
         self.data = None
+        if init:
+            self.update()
 
     def update(self):
         if not os.path.isfile(self.path):
