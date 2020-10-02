@@ -167,7 +167,7 @@ def row_selected_updater(selected_rows):
     new_selector = [{'if': {'row_index': i}, 'background_color': '#D2F3FF'} for i in selected_rows]
     # Try first without triggering a massive update, but if this worker hasn't updated, then fire the interval-component
     # by resetting it to 0 so that new info from `data.update` can be synced to all components
-    interval_state = dash.no_update
+    interval_state = dash.no_update if dash.callback_context.triggered else 0
     try:
         details_real_src = generate_mic_image_src(selected_rows[0])
         details_fft_src = generate_fft_image_src(selected_rows[0])
