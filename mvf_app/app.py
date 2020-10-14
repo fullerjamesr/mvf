@@ -40,8 +40,13 @@ details_table = dash_table.DataTable(id='details_table',
                                      fixed_rows={'headers': True, 'data': 0},
                                      style_table={'margin-top': '20px', 'margin-bottom': '20px', 'maxHeight': '40vh',
                                                   'overflowY': 'scroll'})
+project_name_header = html.H4(className="headerItem")
 app.layout = html.Div([
-                html.H4(children='mvf: Live Relion Preprocessing'),
+                html.Div(id="header", children=[
+                    html.H4(className="headerItem", children='mvf: Live Relion Preprocessing'),
+                    project_name_header,
+                    html.Img(className="headerItemSmall", src=app.get_asset_url('logo.png'))
+                ]),
                 dcc.Tabs([
                     dcc.Tab(label='Overview', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         html.Div([
@@ -52,15 +57,15 @@ app.layout = html.Div([
                             html.H6('Most recent processed image:')
                         ]),
                         html.Div(className='imagerow-container', children=[
-                            html.Img(id='overview_real', className='imagerow-member', style={'width': '60vw'}),
-                            html.Img(id='overview_fft', className='imagerow-member', style={'width': '40vw'})
+                            html.Img(id='overview_real', className='imagerow-member', style={'flex-basis': '60vw'}),
+                            html.Img(id='overview_fft', className='imagerow-member', style={'flex-basis': '40vw'})
                         ]),
                         html.Div(id='overview_modal', className='modal-container', children=[
                             html.Img(id='overview_modal_img', className='modal-content')
                         ])
                     ]),
                     dcc.Tab(label='Motion', style=tab_style_fix, selected_style=tab_style_fix, children=[
-                        dcc.Graph(id='motion_figure', figure=motion_figure, style={'height': '100vh'})]),
+                        dcc.Graph(id='motion_figure', figure=motion_figure, style={'height': '90vh'})]),
                     dcc.Tab(label='CTF', style=tab_style_fix, selected_style=tab_style_fix, children=[
                         dcc.Graph(id='ctf_figure', figure=ctf_figure, style={'height': '120vh'})]),
                     dcc.Tab(label='Details', style=tab_style_fix, selected_style=tab_style_fix, children=[
@@ -68,14 +73,23 @@ app.layout = html.Div([
                         html.Div([
                             html.H6(children='Selected exposure:'),
                             html.Div(className='imagerow-container', style={'margin': '20px'}, children=[
-                                html.Img(id='details_real', className='imagerow-member', style={'width': '30vw'}),
-                                html.Img(id='details_fft', className='imagerow-member', style={'width': '20vw'}),
-                                html.Img(id='details_avrot', className='imagerow-member', style={'width': '50vw'})
+                                html.Img(id='details_real', className='imagerow-member', style={'flex-basis': '30vw'}),
+                                html.Img(id='details_fft', className='imagerow-member', style={'flex-basis': '20vw'}),
+                                html.Img(id='details_avrot', className='imagerow-member', style={'flex-basis': '50vw'})
                             ]),
                             html.Div(id='details_modal', className='modal-container', children=[
                                 html.Img(id='details_modal_img', className='modal-content')
                             ])
                         ])
+                    ])
+                ]),
+                html.Div(id="footer", children=[
+                    html.P(html.Small("mvf development is supported by the Dept. of Biochemistry and Molecular "
+                                      "Biology and the Advanced Electron Microscopy Facility at the University of "
+                                      "Chicago")),
+                    html.A(href="https://github.com/fullerjamesr/mvf", children=[
+                        html.Img(height=32, width=32, style={'margin-left': '3px'},
+                                 src="https://cdn.jsdelivr.net/npm/simple-icons@v3/icons/github.svg")
                     ])
                 ]),
                 refresh_trigger])
@@ -260,7 +274,9 @@ def main(opts=os.environ):
     hint_file_path = os.path.join(os.path.abspath(project_dir), '.mvf_progress_hint')
     data = MotionCtfData(hint_file_path)
     refresh_trigger.interval = 1000 * cfreq
-    app.title = 'mvf: ' + os.path.split(project_dir)[-1]
+    project_name_str = os.path.split(project_dir)[-1]
+    app.title = "mvf: {:s}".format(project_name_str)
+    project_name_header.children = "Project: {:s}".format(project_name_str)
 
 
 if __name__ == '__main__':

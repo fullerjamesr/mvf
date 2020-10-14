@@ -1,11 +1,43 @@
+#header {
+    display: flex;
+    align-items: center;
+}
+.headerItem {
+    flex: 4 1 auto;
+    margin-bottom: 1.2rem;
+    margin-top: 1.2rem;
+}
+.headerItemSmall {
+    flex: 1 2 auto;
+    margin-bottom: 1.2rem;
+    margin-top: 1.2rem;
+}
+img.headerItemSmall {
+    max-height: 32px;
+    min-height: 0px;
+    min-width: 0px;
+    object-fit: contain;
+}
+
+#footer {
+    line-height: 0.85;
+    border-top: 2px solid #1975FA;
+    padding-top: 5px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
 /* reactive horizonal row of images*/
 div.imagerow-container {
     display: flex;
     align-items: flex-start;
 }
 img.imagerow-member {
+    flex: 1;
     margin: 5px;
-    object-fit: contain
+    object-fit: contain;
+    width: 0;
 }
 
 
@@ -27,5 +59,5 @@ div.modal-container {
     max-height: 95vh;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 2.5vh
+    margin-top: 2.5vh;
 }
